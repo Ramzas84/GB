@@ -333,7 +333,7 @@ public:
         }
         if (sum <= 21) return sum;
         else {
-            while (numinator) {
+            while (numinator--) {
                 sum-= 10;
                 if (sum <= 21) return sum;
             }
