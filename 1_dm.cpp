@@ -4,6 +4,7 @@
 #include <tuple>
 #include <vector>
 #include <iomanip>
+#include <algorithm>
 
 using namespace std;
 
@@ -22,10 +23,10 @@ struct Person{
 };
 
 bool operator<(const Person& p1, const Person& p2){
-        return tie(p1.name, p1.lastname, p1.fathername) < tie(p2.name, p2.lastname, p2.fathername);
+        return tie(p1.lastname, p1.name, p1.fathername) < tie(p2.lastname, p2.name, p2.fathername);
     }
 bool operator==(const Person& p1, const Person& p2){
-    return tie(p1.name, p1.lastname, p1.fathername) == tie(p2.name, p2.lastname, p2.fathername);
+    return tie(p1.lastname, p1.name, p1.fathername) == tie(p2.lastname, p2.name, p2.fathername);
 }
 ostream& operator<<(ostream& out, const Person& p1){
     out << right << setw(12) << p1.lastname  << right << setw(10)<< p1.name  
@@ -61,8 +62,10 @@ bool operator==(const PhoneNumber& pn1, const PhoneNumber& pn2){
             tie(pn2.countryCode, pn2.cityCode, pn2.number, pn2.additionalNumber);
 }
 ostream& operator<<(ostream& out, const PhoneNumber& pn){
-    out << '+' << pn.countryCode << '(' << pn.cityCode << ')' << pn.number;
-    if (pn.additionalNumber != -1) out <<' ' << pn.additionalNumber;
+    if (pn.countryCode != -1){
+        out << '+' << pn.countryCode << '(' << pn.cityCode << ')' << pn.number;
+        if (pn.additionalNumber != -1) out <<' ' << pn.additionalNumber;
+    }
     return out;
 }
 
@@ -95,6 +98,44 @@ public:
         }
     }
     friend ostream& operator<<(ostream& out, const PhoneBook& pn);
+
+// В классе PhoneBook реализуйте метод SortByName, который должен сортировать элементы
+// контейнера по фамилии людей в алфавитном порядке. Если фамилии будут одинаковыми, то
+// сортировка должна выполняться по именам, если имена будут одинаковы, то сортировка
+// производится по отчествам. Используйте алгоритмическую функцию sort.
+    void SortByName(){
+        sort(book.begin(), book.end(), 
+            [](pair<Person, PhoneNumber> per1, pair<Person, PhoneNumber> per2)
+            {return per1.first < per2.first;});
+    }
+    
+// Реализуйте метод SortByPhone, который должен сортировать элементы контейнера по
+// номерам телефонов. Используйте алгоритмическую функцию sort
+    void SortByPhone(){
+        sort(book.begin(), book.end(), 
+            [](pair<Person, PhoneNumber> per1, pair<Person, PhoneNumber> per2)
+            {return per1.second < per2.second;});
+    }
+    
+// Реализуйте метод GetPhoneNumber, который принимает фамилию человека, а возвращает
+// кортеж из строки и PhoneNumber. Строка должна быть пустой, если найден ровно один
+// человек с заданном фамилией в списке. Если не найден ни один человек с заданной
+// фамилией, то в строке должна быть запись «not found», если было найдено больше одного
+// человека, то в строке должно быть «found more than 1».
+    tuple<string, PhoneNumber> GetPhoneNumber (string ln){
+        PhoneNumber phone(-1, 0, 0, -1);
+        int flag = 0;
+        for (int i = book.size() - 1 ; i >= 0; --i){
+            if (book[i].first.lastname == ln){
+                ++flag;
+                phone = book[i].second;
+            }    
+        }
+        string text = "";
+        if (!flag) text = "not found";
+        else if (flag > 1) text = "found more than 1";
+        return tie(text, phone);
+    }
 };
 
 ostream& operator<<(ostream& out, const PhoneBook& pn){
@@ -102,7 +143,9 @@ ostream& operator<<(ostream& out, const PhoneBook& pn){
         out << ' ' << rec.first << "\t" << rec.second << endl;
     }
     return out;
+    
 }
+
 
 
 int main(){
@@ -124,8 +167,16 @@ int main(){
     fstream file;
     file.open("book.txt");
     PhoneBook book (file);
-    cout << book;
-    
+    cout << book << "\n\n";
+    book.SortByName();
+    cout << book << "\n\n";
+    //book.SortByPhone();
+    //cout << book << "\n\n";
+    string pn;
+    PhoneNumber number(0, 0, 0, -1);
+    string ln = "Solovev";
+    tie(pn, number) = book.GetPhoneNumber("Solovev");
+    cout << pn << ' ' << number << endl;
     //cout << str;
     
     return 0;
