@@ -2,7 +2,8 @@
 #include <fstream>
 #include <string>
 #include <tuple>
-
+#include <vector>
+#include <iomanip>
 
 using namespace std;
 
@@ -27,8 +28,8 @@ bool operator==(const Person& p1, const Person& p2){
     return tie(p1.name, p1.lastname, p1.fathername) == tie(p2.name, p2.lastname, p2.fathername);
 }
 ostream& operator<<(ostream& out, const Person& p1){
-    out << p1.lastname <<' ' << p1.name;
-    if (p1.fathername != "-") out << ' ' << p1.fathername;
+    out << right << setw(12) << p1.lastname  << right << setw(10)<< p1.name  
+        << std::right << std::setw(15) << (p1.fathername == "-" ? "" : p1.fathername);
     return out;
 }
 
@@ -59,11 +60,50 @@ bool operator==(const PhoneNumber& pn1, const PhoneNumber& pn2){
     return tie(pn1.countryCode, pn1.cityCode, pn1.number, pn1.additionalNumber) ==
             tie(pn2.countryCode, pn2.cityCode, pn2.number, pn2.additionalNumber);
 }
-ostream& operator<<(ostream& out, PhoneNumber& pn){
+ostream& operator<<(ostream& out, const PhoneNumber& pn){
     out << '+' << pn.countryCode << '(' << pn.cityCode << ')' << pn.number;
-    if (pn.additionalNumber != int('-')) out <<' ' << pn.additionalNumber;
+    if (pn.additionalNumber != -1) out <<' ' << pn.additionalNumber;
     return out;
 }
+
+// Создайте класс PhoneBook, который будет в контейнере хранить пары: Человек – Номер
+// телефона. Конструктор этого класса должен принимать параметр типа ifstream – поток данных,
+// полученных из файла. В теле конструктора происходит считывание данных из файла и
+// © geekbrains.ru 25
+// заполнение контейнера. Класс PhoneBook должен содержать перегруженный оператор
+// вывода, для вывода всех данных из контейнера в консоль.
+
+class PhoneBook{
+    vector<pair<Person, PhoneNumber>> book;
+public:
+    PhoneBook(fstream& file) {
+        if (file){
+            string ln, n, fn;
+            while(file >> ln >> n >> fn){
+                Person cur(ln, n, fn);
+                int country, city, number, addit;
+                file >> country >> city >> number;
+                string additnl;
+                file >> additnl;
+                if (additnl != "-"){
+                    addit = atoi(additnl.c_str());
+                }
+                else addit = -1;
+                PhoneNumber curPerson (country, city, number, addit);
+                book.push_back({cur, curPerson});
+            }
+        }
+    }
+    friend ostream& operator<<(ostream& out, const PhoneBook& pn);
+};
+
+ostream& operator<<(ostream& out, const PhoneBook& pn){
+    for (const auto& rec : pn.book){
+        out << ' ' << rec.first << "\t" << rec.second << endl;
+    }
+    return out;
+}
+
 
 int main(){
     Person roman ("Yakunin", "Roman");
@@ -78,17 +118,15 @@ int main(){
 
     //bool r = roman < vlad;
     
-    cout << (roman == vlad);
-    string str;
+    //cout << (roman == vlad);
+    //string str;
+    
     fstream file;
     file.open("book.txt");
-    if (file){
-        while(!file.eof()){
-            string tmp;
-            file >> tmp;
-            str += tmp;
-        }
-    }
+    PhoneBook book (file);
+    cout << book;
+    
     //cout << str;
+    
     return 0;
 }
