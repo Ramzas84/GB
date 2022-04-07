@@ -45,8 +45,9 @@ ostream& operator<<(ostream& out, const Person& p1){
 // надо. Также перегрузите операторы < и == (используйте tie)
 
 struct PhoneNumber{
-    int countryCode, cityCode, number, additionalNumber;
-    PhoneNumber (int cc, int city, int n, int an) :
+    int countryCode, cityCode, additionalNumber;
+    string number;
+    PhoneNumber (int cc, int city, string n, int an) :
         countryCode(cc), cityCode(city), number(n), additionalNumber(an) {}
     friend bool operator<(const PhoneNumber& pn1, const PhoneNumber& pn2);
     friend bool operator==(const PhoneNumber& pn1, const PhoneNumber& pn2);
@@ -79,19 +80,20 @@ ostream& operator<<(ostream& out, const PhoneNumber& pn){
 class PhoneBook{
     vector<pair<Person, PhoneNumber>> book;
 public:
-    PhoneBook(fstream& file) {
+    PhoneBook(ifstream& file) {
         if (file){
             string ln, n, fn;
             while(file >> ln >> n >> fn){
                 Person cur(ln, n, fn);
-                int country, city, number, addit;
+                int country, city, addit;
+                string number;
                 file >> country >> city >> number;
                 string additnl;
                 file >> additnl;
                 if (additnl != "-"){
                     addit = atoi(additnl.c_str());
                 }
-                else addit = -1;
+                else addit = 0;
                 PhoneNumber curPerson (country, city, number, addit);
                 book.push_back({cur, curPerson});
             }
@@ -122,8 +124,8 @@ public:
 // человек с заданном фамилией в списке. Если не найден ни один человек с заданной
 // фамилией, то в строке должна быть запись «not found», если было найдено больше одного
 // человека, то в строке должно быть «found more than 1».
-    tuple<string, PhoneNumber> GetPhoneNumber (string ln){
-        PhoneNumber phone(-1, 0, 0, -1);
+    tuple<string, PhoneNumber> GetPhoneNumber (const string& ln){
+        PhoneNumber phone(-1, 0, "0", -1);
         int flag = 0;
         for (int i = book.size() - 1 ; i >= 0; --i){
             if (book[i].first.lastname == ln){
@@ -136,6 +138,17 @@ public:
         else if (flag > 1) text = "found more than 1";
         return tie(text, phone);
     }
+// Реализуйте метод ChangePhoneNumber, который принимает человека и новый номер
+// телефона и, если находит заданного человека в контейнере, то меняет его номер телефона на
+// новый, иначе ничего не делает.
+    void ChangePhoneNumber (Person p, PhoneNumber newNumber){
+        for (auto& rec : book){
+            if (rec.first == p){
+                rec.second = newNumber;
+                return;
+            }
+        }
+    }
 };
 
 ostream& operator<<(ostream& out, const PhoneBook& pn){
@@ -143,41 +156,40 @@ ostream& operator<<(ostream& out, const PhoneBook& pn){
         out << ' ' << rec.first << "\t" << rec.second << endl;
     }
     return out;
-    
 }
 
 
 
 int main(){
-    Person roman ("Yakunin", "Roman");
-    Person vlad ("Yakunin", "Roman", "Vladimirovich");
-    cout << roman << endl;
-    cout << vlad << endl;
-    
-    PhoneNumber r (1, 650, 7504109, int('-'));
-    PhoneNumber v (7, 908, 5555483, int('-'));
-    cout << r << endl;
-    cout << v << endl;
-
-    //bool r = roman < vlad;
-    
-    //cout << (roman == vlad);
-    //string str;
-    
-    fstream file;
-    file.open("book.txt");
+    ifstream file ("book.txt"); // путь к файлу PhoneBook.txt
     PhoneBook book (file);
-    cout << book << "\n\n";
+    cout << book;
+    cout << "------SortByPhone-------" << endl;
+    book.SortByPhone();
+    cout << book;
+    cout << "------SortByName--------" << endl;
     book.SortByName();
-    cout << book << "\n\n";
-    //book.SortByPhone();
-    //cout << book << "\n\n";
-    string pn;
-    PhoneNumber number(0, 0, 0, -1);
-    string ln = "Solovev";
-    tie(pn, number) = book.GetPhoneNumber("Solovev");
-    cout << pn << ' ' << number << endl;
-    //cout << str;
+    cout << book;
+    cout << "-----GetPhoneNumber-----" << endl;
+    // лямбда функция, которая принимает фамилию и выводит номер телефона
+    // этого человека, либо строку с ошибкой
+    auto print_phone_number = [&book](const string& surname) {
+        cout << surname << "\t";
+        auto answer = book.GetPhoneNumber(surname);
+        if (get<0>(answer).empty())
+            cout << get<1>(answer);
+        else cout << get<0>(answer);
+        cout << endl;
+    };
+    // вызовы лямбды
+    print_phone_number("Ivanov");
+    print_phone_number("Petrov");
+    cout << "----ChangePhoneNumber----" << endl;
+    book.ChangePhoneNumber(Person{ "Kotov", "Vasilii", "Eliseevich" },
+                            PhoneNumber{7, 123, "15344458", -1}); // nullopt?
+    book.ChangePhoneNumber(Person{ "Mironova", "Margarita", "Vladimirovna" },
+                            PhoneNumber{ 16, 465, "9155448", 13 });
+    cout << book;
     
     return 0;
 }
