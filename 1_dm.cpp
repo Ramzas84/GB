@@ -93,7 +93,7 @@ public:
                 if (additnl != "-"){
                     addit = atoi(additnl.c_str());
                 }
-                else addit = 0;
+                else addit = -1;
                 PhoneNumber curPerson (country, city, number, addit);
                 book.push_back({cur, curPerson});
             }
