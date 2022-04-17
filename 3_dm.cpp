@@ -80,6 +80,60 @@ public:
     }
 };
 
+// 2. Создать класс, представляющий матрицу. Реализовать в нем метод, вычисляющий определитель матрицы. 
+// Для реализации используйте контейнеры из STL.
+class Matrix{
+    size_t size;
+    vector<vector<double>> mat;
+public:
+    Matrix() : size(0) {}
+    Matrix(size_t s) : size(s) {
+        for (int i = 0; i < size; ++i){
+            mat.push_back(vector<double>(size));
+            for (double& a : mat.back()) a = rand() % 10;
+        }
+    }
+    
+    void print(){
+        for (const auto& line : mat){
+            for(const double i : line){
+                cout << i << ' ';
+            }
+            cout << endl;
+        }
+        cout << endl;
+    }
+    
+    double determinant(){
+        vector<vector<double>> temp = mat;
+        const double EPS = 1E-9;
+        int n = size;
+        double det = 1;
+        for (int i=0; i<n; ++i) {
+        	int k = i;
+        	for (int j=i+1; j<n; ++j)
+        		if (abs (mat[j][i]) > abs (mat[k][i]))
+        			k = j;
+        	if (abs (mat[k][i]) < EPS) {
+        		det = 0;
+        		break;
+        	}
+        	swap (mat[i], mat[k]);
+        	if (i != k)
+        		det = -det;
+        	det *= mat[i][i];
+        	for (int j=i+1; j<n; ++j)
+        		mat[i][j] /= mat[i][i];
+        	for (int j=0; j<n; ++j)
+        		if (j != i && abs (mat[j][i]) > EPS)
+        			for (int k=i+1; k<n; ++k)
+        				mat[j][k] -= mat[i][k] * mat[j][i];
+        }
+        mat = temp;
+        return det;
+    }
+};
+
 int main(){
     list<float> a {5, 7.8, 3.2};
     printList(a);
@@ -93,5 +147,13 @@ int main(){
     }
     for (auto i : dArr)
         cout << i << ' ';
+    cout << endl;
+    
+    cout << "Matrix\n"; 
+    Matrix m(5);
+    m.print();
+    cout << m.determinant() << endl;
+    m.print();
+
     return 0;
 }
