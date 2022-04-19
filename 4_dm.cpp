@@ -24,7 +24,7 @@ void insert_sorted (vector<T>& a, T insert){
         return;
     }
     copy(it, a.end(), it + 1);
-    a[distance(a.begin(), it)] = insert;
+    *it = insert;
 }
 
 // 3. Подсчитайте количество гласных букв в книге “Война и мир”. Для подсчета используйте 4 способа:
@@ -111,20 +111,23 @@ int main(){
     printf("---------Tusk 2---------\n");
     printf("---------Vector A---------\n");
 
-    vector<float> a (100);
+    int sz = 100;
+    vector<float> a (sz);
     generate(a.begin(), a.end(), [](){return rand() % 10000/100.00;});
     for_each(a.begin(), a.end(), [](const float& i){cout << i << ' ';});
     printf("\n---------Vector B---------\n");
 
-    vector<int> b (100);
+    vector<int> b (sz);
     copy(a.begin(), a.end(), b.begin());
     for_each(b.begin(), b.end(), [](const float& i){cout << i << ' ';});
-    float sumA = accumulate(a.begin(), a.end(), 0.0); // не работает с флотами
-    //sumA = 0;
-    //for (float i : a) sumA += i;
-    float sumB = accumulate(b.begin(), b.end(), 0);
-    float mistake = pow(sumA - sumB, 2);
-    cout << endl << sumA <<' ' << sumB << endl<< "mistake = " << mistake;
+    std::vector<float>c;
+    transform(a.begin(), a.end(), b.begin(), back_inserter(c), [](float a1, int b1){
+        return pow(a1 - b1, 2);
+    });
+    printf("\n---------Vector C---------\n");
+    for_each(c.begin(), c.end(), [](const float& i){cout << i << ' ';});
+    float sum = accumulate(c.begin(), c.end(), 0.0);
+    cout << endl << "mistake = " << sum;
     
     printf("\n---------Tusk 3 (Old homework)---------\n");
     fstream f("text.txt");
@@ -138,10 +141,6 @@ int main(){
     
     fstream f4("text.txt");
     forAndFor(f4);
-    
-    string st = "uesndvjsdnvuegfc";
-    auto it = st.find(vowels);
-    //cout << it;
     
     return 0;
 }
