@@ -21,19 +21,19 @@ public:
     ThreadSafeOStream(ostream& o) : os(o) {}
     template <typename T>
     ThreadSafeOStream& operator<<(const T& s) {
-        //m.lock();
+        m.lock();
         os << s;
-        //m.unlock();
+        m.unlock();
         return *this;
-  }
+    }
 };
 
 ThreadSafeOStream pcout(cout);
 
 void doSomething(int number) {
-    pcout << "start thread " << number << '\n';
+    pcout << "start thread " << number << "\n";
     this_thread::sleep_for(1s);
-    pcout << "stop thread " << number << '\n';
+    pcout << "stop thread " << number << "\n";
 }
 
 // 2. Реализовать функцию, возвращающую i-ое простое число (например, миллионное простое
@@ -126,18 +126,18 @@ int main(){
     th2.join();
     th3.join();
     
-    // Задание 2
+    // // Задание 2
     PrimeComputer pc(1000000);
     thread th(&PrimeComputer::nPrimeNum, &pc);
     th.detach();
     while(pc.res == -1){
-        cout << pc.count << " - " << pc.current << endl;
+        cout << pc.count << " - " << pc.current << " - " << pc.count * 100 / pc.n << '%' << endl;
         this_thread::sleep_for(500ms);
     }
     cout << pc.count << " - " << pc.res << endl;
     
-    //Задание 3
-    int size = 10;
+    // //Задание 3
+    int size = 5;
     vector<int> things(size);
     for (int i = 0; i < size; ++ i) things[i] = rand() % 100;
     for (int i : things) cout << i << ' ';
