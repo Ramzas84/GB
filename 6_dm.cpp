@@ -12,21 +12,24 @@ using namespace std;
 // несколько потоков могли обращаться к pcout и информация выводилась в консоль. Продемонстрируйте 
 // работу pcout.
 
-mutex m;
 
 class ThreadSafeOStream {
 private:
     ostream& os;
+    mutex m;
 public:
     ThreadSafeOStream(ostream& o) : os(o) {}
     template <typename T>
-    ThreadSafeOStream& operator<<(const T& s) {
-        m.lock();
-        os << s;
-        m.unlock();
-        return *this;
-    }
+    friend ThreadSafeOStream& operator<<(ThreadSafeOStream& os, const T& s);
 };
+
+template <typename T>
+ThreadSafeOStream& operator<<(ThreadSafeOStream& os, const T& s) {
+    os.m.lock();
+    os.os << s;
+    os.m.unlock();
+    return os;
+}
 
 ThreadSafeOStream pcout(cout);
 
@@ -75,7 +78,7 @@ public:
 // 1 раз в секунду). При этом у каждой вещи есть своя ценность. Вор забирает вещи (функция, которая 
 // находит наибольшее число и удаляет из вектора с периодичностью 1 раз в 0.5 секунд), каждый раз 
 
-mutex th, mas;
+mutex th;
 
 class Thief{
     vector<int>& things;
@@ -88,7 +91,7 @@ public:
             int a = *m;
             copy(m + 1, things.end(), m);
             things.pop_back();
-            th.lock();
+            th.lock(); //  без мутексов потоки все равно не мешаются. Может и не нужны они здесь?
             cout << "Thief: ";
             for (int i : things) cout << i << ' ';
             cout << " - " << a << endl;
@@ -108,11 +111,11 @@ public:
             int a = rand() % 100;
             things.push_back(a);
             swap(things[things.size() - 1], things[rand() % things.size()]);
-            mas.lock();
+            th.lock();
             cout << "Master: ";
             for (int i : things) cout << i << ' ';
             cout << " - " << a << endl;
-            mas.unlock();
+            th.unlock();
             this_thread::sleep_for(1s);
         }
     }
@@ -126,18 +129,18 @@ int main(){
     th2.join();
     th3.join();
     
-    // // Задание 2
+    // Задание 2
     PrimeComputer pc(1000000);
     thread th(&PrimeComputer::nPrimeNum, &pc);
     th.detach();
     while(pc.res == -1){
-        cout << pc.count << " - " << pc.current << " - " << pc.count * 100 / pc.n << '%' << endl;
+        cout << pc.count << " - " << pc.current << " - " << pow(pc.count, 2) * 100 / pow(pc.n, 2) << '%' << endl;
         this_thread::sleep_for(500ms);
     }
     cout << pc.count << " - " << pc.res << endl;
     
-    // //Задание 3
-    int size = 5;
+    //Задание 3
+    int size = 10;
     vector<int> things(size);
     for (int i = 0; i < size; ++ i) things[i] = rand() % 100;
     for (int i : things) cout << i << ' ';
